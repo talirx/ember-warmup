@@ -27,8 +27,8 @@ export default function EmberBackground() {
   return (
     <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       {/* warm glow blobs */}
-      <div className="absolute -top-32 -right-24 h-[26rem] w-[26rem] rounded-full bg-ember-400/15 blur-[120px]" />
-      <div className="absolute -bottom-40 -left-24 h-[28rem] w-[28rem] rounded-full bg-amber-400/10 blur-[130px]" />
+      <div className="absolute -top-32 -right-24 h-[40rem] w-[40rem] rounded-full bg-ember-400/15 blur-[140px]" />
+      <div className="absolute -bottom-56 -left-32 h-[44rem] w-[44rem] rounded-full bg-amber-400/10 blur-[150px]" />
 
       {/* rising embers */}
       {embers.map((e) => (
