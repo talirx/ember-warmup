@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --color-ash-950: #16100c;
+  --color-ash-900: #1f1711;
+  --color-ash-800: #241a13;
+  --color-ash-700: #2b1f16;
+  --color-ash-600: #3a2a1d;
+  --color-ash-500: #4a3626;
+
+  --color-ember-300: #ff8a4d;
+  --color-ember-400: #ff6a2b;
+  --color-ember-500: #ff4d00;
+  --color-amber-400: #ffb020;
+
+  --color-cream: #f4ede4;
+  --color-cream-muted: #a89480;
+  --color-cream-faint: #7a6a58;
+
+  --color-moss: #4ade80;
+
+  --radius-card: 16px;
+  --radius-btn: 10px;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--color-ash-950);
+  color: var(--color-cream);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- range slider (ember) ---------- */
+input[type="range"].ember-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--color-ember-400) 0%,
+    var(--color-amber-400) var(--fill, 30%),
+    var(--color-ash-700) var(--fill, 30%),
+    var(--color-ash-700) 100%
+  );
+  outline: none;
+  cursor: pointer;
+}
+input[type="range"].ember-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--color-ember-400);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  transition: transform 0.1s ease;
+}
+input[type="range"].ember-range::-webkit-slider-thumb:hover { transform: scale(1.12); }
+input[type="range"].ember-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--color-ember-400);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+input[type="range"].ember-range.capped::-webkit-slider-thumb { border-color: var(--color-amber-400); }
+input[type="range"].ember-range.capped::-moz-range-thumb { border-color: var(--color-amber-400); }
+
+/* ---------- flame mascot ---------- */
+.flame-flicker {
+  transform-box: view-box;
+  transform-origin: 60px 96px;
+  animation: flame-flicker 2.4s ease-in-out infinite;
+}
+.flame-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+.flame-eye {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 5s infinite;
+}
+.flame-sway { animation: sway 3.6s ease-in-out infinite; }
+.ember-particle {
+  animation: ember-rise 2.2s linear infinite;
+}
+
+@keyframes flame-flicker {
+  0%, 100% { transform: scaleY(1) rotate(0deg) skewX(0deg); }
+  25%      { transform: scaleY(1.05) rotate(-2deg) skewX(2deg); }
+  50%      { transform: scaleY(0.96) rotate(2deg) skewX(-1.5deg); }
+  75%      { transform: scaleY(1.03) rotate(-1.5deg) skewX(1deg); }
+}
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.08); }
+}
+@keyframes blink {
+  0%, 91%, 100% { transform: scaleY(1); }
+  94%, 97%      { transform: scaleY(0.08); }
+}
+@keyframes sway {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes ember-rise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  15%  { opacity: 0.9; }
+  100% { transform: translateY(-46px) translateX(var(--dx, 6px)); opacity: 0; }
+}
+
+/* ---------- ember background particles ---------- */
+.ember-bg {
+  position: absolute;
+  bottom: -20px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffd166 0%, #ff6a2b 60%, transparent 100%);
+  box-shadow: 0 0 8px rgba(255, 140, 60, 0.7);
+  animation-name: ember-bg-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  opacity: 0;
+}
+@keyframes ember-bg-rise {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.85; }
+  100% { transform: translateY(-105vh) translateX(var(--drift, 0px)); opacity: 0; }
+}
+
+@keyframes fadein {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  from { transform: scale(0.95); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.animate-fadein { animation: fadein 0.35s ease; }
+.animate-pop { animation: pop 0.25s cubic-bezier(0.22, 0.9, 0.3, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  .flame-flicker, .flame-glow, .flame-sway, .ember-particle, .ember-bg,
+  .animate-fadein, .animate-pop {
+    animation: none !important;
+  }
+}
