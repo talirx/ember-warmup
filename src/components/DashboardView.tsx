@@ -1,10 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ActivityItem, ActivityStatus } from '../types'
+import { loadSettings, saveSettings, type WarmupSettings } from '../lib/store'
 import FlameMascot from './FlameMascot'
 import Slider from './Slider'
 import PaywallModal from './PaywallModal'
 
 interface DashboardViewProps {
+  uid: string
   mailbox: string
   onSignOut: () => void
 }
@@ -27,14 +29,42 @@ const STATUS_CHIP: Record<ActivityStatus, { label: string; cls: string }> = {
   sent: { label: 'Enviado', cls: 'bg-ash-700 text-cream-faint' },
 }
 
-export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps) {
+export default function DashboardView({ uid, mailbox, onSignOut }: DashboardViewProps) {
   const [volume, setVolume] = useState(FREE_LIMIT)
   const [reply, setReply] = useState(40)
   const [randomizer, setRandomizer] = useState(60)
+  const [ready, setReady] = useState(false)
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [upgrading, setUpgrading] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [dragLock, setDragLock] = useState(false)
+
+  // debounced persistence of the three sliders
+  const saveTimer = useRef<number | null>(null)
+  const persist = (patch: Partial<WarmupSettings>) => {
+    if (saveTimer.current) window.clearTimeout(saveTimer.current)
+    saveTimer.current = window.setTimeout(() => {
+      saveSettings(uid, patch).catch(() => {})
+    }, 600)
+  }
+
+  useEffect(() => {
+    let alive = true
+    loadSettings(uid)
+      .then((s) => {
+        if (!alive) return
+        setVolume(s.volume)
+        setReply(s.replyTarget)
+        setRandomizer(s.randomizer)
+        setReady(true)
+      })
+      .catch(() => {
+        if (alive) setReady(true)
+      })
+    return () => {
+      alive = false
+    }
+  }, [uid])
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -59,7 +89,18 @@ export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps
       }
     } else {
       setVolume(v)
+      persist({ volume: v })
     }
+  }
+
+  const handleReply = (v: number) => {
+    setReply(v)
+    persist({ replyTarget: v })
+  }
+
+  const handleRandomizer = (v: number) => {
+    setRandomizer(v)
+    persist({ randomizer: v })
   }
 
   const handleUpgrade = () => {
@@ -67,13 +108,20 @@ export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps
     window.setTimeout(() => {
       setUpgrading(false)
       setPaywallOpen(false)
-      showToast('Pago no conectado en el POC — aquí iría el checkout.')
+      showToast('Pago no conectado aún — aquí iría Stripe Checkout.')
     }, 1000)
+  }
+
+  if (!ready) {
+    return (
+      <div className="grid min-h-screen place-items-center">
+        <span className="h-6 w-6 animate-spin rounded-full border-2 border-ember-400 border-t-transparent" />
+      </div>
+    )
   }
 
   return (
     <div className="relative z-10">
-      {/* topbar */}
       <header className="sticky top-0 z-20 flex items-center justify-between border-b border-ash-600 bg-ash-950/85 px-6 py-3 backdrop-blur">
         <div className="flex items-center gap-2">
           <FlameMascot size={28} />
@@ -91,22 +139,20 @@ export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps
             title="Cerrar sesión"
             aria-label="Cerrar sesión"
           >
-            N
+            {(mailbox[0] ?? 'N').toUpperCase()}
           </button>
         </div>
       </header>
 
       <div className="mx-auto max-w-[920px] px-5 py-6 pb-16">
-        {/* status strip */}
         <div className="mb-5 flex flex-wrap items-center gap-3 rounded-[var(--radius-card)] border border-ash-600 bg-ash-800 px-4 py-3.5">
           <span className="h-2.5 w-2.5 rounded-full bg-moss shadow-[0_0_0_3px_rgba(74,222,128,0.15)]" />
           <span className="text-[0.9rem] font-semibold">{mailbox}</span>
           <span className="text-[0.82rem] text-cream-muted">
-            Buzón conectado · <b className="font-semibold text-cream">hace 2 min</b> · 20 correos/día
+            Sesión iniciada · <b className="font-semibold text-cream">{volume} correos/día</b> · config guardada
           </span>
         </div>
 
-        {/* controls */}
         <section className="mb-5 rounded-[var(--radius-card)] border border-ash-600 bg-ash-800 p-6">
           <h2 className="text-[1.05rem] font-bold tracking-tight">Panel de control</h2>
           <p className="mb-3 mt-1 text-[0.84rem] text-cream-muted">
@@ -131,7 +177,7 @@ export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps
             max={90}
             value={reply}
             unit="%"
-            onChange={setReply}
+            onChange={handleReply}
           />
           <Slider
             label="Aleatoriedad"
@@ -140,25 +186,23 @@ export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps
             max={100}
             value={randomizer}
             unit="%"
-            onChange={setRandomizer}
+            onChange={handleRandomizer}
           />
         </section>
 
-        {/* reports */}
         <section className="rounded-[var(--radius-card)] border border-ash-600 bg-ash-800 p-6">
           <h2 className="text-[1.05rem] font-bold tracking-tight">Reportes de warm-up</h2>
           <p className="mb-4 mt-1 text-[0.84rem] text-cream-muted">
-            Progreso y salud del buzón. Simulación del POC — datos de ejemplo.
+            Progreso y salud del buzón. El motor de envío real se conecta en la siguiente fase.
           </p>
 
           <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
             <Kpi label="Tasa de apertura" value={`${metrics.open}%`} sub="▲ 4% vs. semana pasada" accent />
             <Kpi label="Tasa de respuesta" value={`${metrics.replyRate}%`} sub={`objetivo ${reply}%`} accent />
             <Kpi label="Correos enviados" value="124" sub="en los últimos 30 días" />
-            <Kpi label="Finalización estimada" value={String(metrics.days) + ' días'} sub={metrics.etaDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} green />
+            <Kpi label="Finalización estimada" value={`${metrics.days} días`} sub={metrics.etaDate.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })} green />
           </div>
 
-          {/* progress */}
           <div className="mb-5">
             <div className="mb-2 flex items-baseline justify-between">
               <span className="text-[0.95rem] font-bold">Progreso de warm-up</span>
@@ -169,7 +213,6 @@ export default function DashboardView({ mailbox, onSignOut }: DashboardViewProps
             </div>
           </div>
 
-          {/* activity */}
           <div className="mb-2.5 text-[0.85rem] font-bold text-cream-muted">Actividad reciente</div>
           <ul>
             {ACTIVITY.map((a, i) => (
