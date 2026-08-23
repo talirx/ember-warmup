@@ -1,9 +1,11 @@
-// Auto-generated from Zentix web config (firebase web config is public client config).
+// Firebase web config — driven by Vite env vars (VITE_FIREBASE_*).
+// The web config (apiKey etc.) is public client config, not a secret.
+// Point at a different Firebase project by editing .env — no code changes.
 export const firebaseConfig = {
-  "apiKey": "AIzaSyCjCyG4pJSGWwOJfS8Kj0uXkDwz1E2Itis",
-  "authDomain": "zentix-chatbot.firebaseapp.com",
-  "projectId": "zentix-chatbot",
-  "appId": "1:901099216511:web:678e7f8d7ad70dfbc9a94a",
-  "messagingSenderId": "901099216511",
-  "storageBucket": "zentix-chatbot.firebasestorage.app"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }

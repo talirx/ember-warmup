@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthed() {
+      return request.auth != null;
+    }
+    function isOwner(uid) {
+      return isAuthed() && request.auth.uid == uid;
+    }
+
+    // ---- Ember email warm-up (namespaced under ember_users) ----
+    match /ember_users/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if isOwner(uid);
+
+      // per-user warm-up settings
+      match /ember_settings/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // connected mailboxes (IMAP/SMTP creds live server-side only; never stored here)
+      match /ember_mailboxes/{mailboxId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      // warm-up activity / metrics
+      match /ember_activity/{docId} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // ---- Warm-up engine state (server-side only, Admin SDK writes) ----
+    match /ember_engine/{docId} {
+      allow read: if isAuthed();
+      allow write: if false; // Admin SDK only
+    }
+  }
+}
